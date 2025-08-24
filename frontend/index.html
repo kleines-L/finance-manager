@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance Manager — Login</title>
+  <meta name="color-scheme" content="light dark" />
+  <link rel="stylesheet" href="./css/index.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="brand float" aria-hidden="true">
+      <div class="logo" aria-hidden="true">
+        <!-- Simple finance mark: stacked bars -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2" y="12" width="3" height="8" rx="1.5" fill="white" opacity="0.9"/>
+          <rect x="8.5" y="8" width="3" height="12" rx="1.5" fill="white" opacity="0.9"/>
+          <rect x="15" y="4" width="3" height="16" rx="1.5" fill="white" opacity="0.9"/>
+        </svg>
+      </div>
+      <span>Finance Manager</span>
+    </div>
+
+    <section class="card" role="region" aria-labelledby="welcome-title">
+      <div class="welcome-animate">
+        <h1 id="welcome-title">Welcome hero</h1>
+        <p class="sub">to your finances</p>
+      </div>
+      <div class="divider" aria-hidden="true"></div>
+
+      <form class="stack" method="post" action="/login" autocomplete="on">
+        <p class="sub" style="margin-top:-2px">Login to get access to your dashboard</p>
+
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" placeholder="Enter your username" required inputmode="email" autocomplete="username" />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Enter your password" required autocomplete="current-password" />
+        </div>
+
+        <button class="btn" type="submit" aria-label="Login">
+          <!-- login icon -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 17l5-5-5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15 12H3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Login
+        </button>
+
+        <p class="hint">Contact hero@finances.net for access</p>
+      </form>
+    </section>
+
+    <footer class="hint" aria-label="footer">
+      © <span id="year"></span> Finance Manager
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Animation beim Laden
+    window.addEventListener('DOMContentLoaded', function() {
+      var card = document.querySelector('.card');
+      var welcome = card.querySelector('.welcome-animate');
+      setTimeout(function() {
+        card.classList.add('visible');
+        setTimeout(function() {
+          welcome.classList.add('visible');
+        }, 200); // Verzögerung für gestaffeltes Einblenden
+      }, 100); // kleine Verzögerung für den Slide-In
+    });
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+      // e.preventDefault();
+    });
+  </script>
+</body>
+</html>

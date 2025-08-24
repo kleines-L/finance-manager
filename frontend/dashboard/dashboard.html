@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Finance Manager</title>
+    <link rel="stylesheet" href="./css/dashboard.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="header">
+        <h1>Finance Manager</h1>
+        <h2>Dashboard</h2>
+        <h2>Export/Import</h2>
+        <h2>(Icon für profile)</h2>
+        <img src="./img/user-icon.png" alt="User Icon" class="user-icon">
+    </div>
+
+    <div class="content">
+        <h2>Welcome to the Dashboard</h2>
+        <div class="time-dropdown">
+            <label for="timeframe">Zeitraum:</label>
+            <select id="timeframe">
+                <option value="last30days">This month</option>
+                <option value="last90days">Last 3 months</option>
+                <option value="last180days">Last 6 months</option>
+                <option value="lastYear">Last year</option>
+                <option value="custom">All time</option>
+            </select>
+        </div>
+
+        <div class="data">
+            <div class="balance">
+                <h3>Current Balance</h3>
+                <p>€5,000</p>
+            </div>
+            <div class="expenses">
+                <h3>Current Expenses</h3>
+                <p>€2,000</p>
+            </div>
+            <div class="income">
+                <h3>Current Income</h3>
+                <p>€7,000</p>
+            </div>
+            <div class="budget">
+                <h3>Budget goal</h3>
+                <p>56% (352.32€ of 630.00€)</p>
+            </div>
+            <div class="transactions">
+                <h3>Recent Transactions</h3>
+                <ul>
+                    <li>Pandora DE: -€61.90 (Shopping) 24.08.2025</li>
+                    <li>GKM Interactive: +€500.00 (Salary) 24.08.2025</li>
+                    <li>McDonalds: -€26.30 (Food) 25.08.2025</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
+
+<style>
+
+</style>
