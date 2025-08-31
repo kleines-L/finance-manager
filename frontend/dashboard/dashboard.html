@@ -18,7 +18,7 @@
     <div class="content">
         <h2>Welcome to the Dashboard</h2>
         <div class="time-dropdown">
-            <label for="timeframe">Zeitraum:</label>
+            <label for="timeframe">Zeitraum: </label>
             <select id="timeframe">
                 <option value="last30days">This month</option>
                 <option value="last90days">Last 3 months</option>
@@ -32,26 +32,50 @@
             <div class="balance">
                 <h3>Current Balance</h3>
                 <p>€5,000</p>
+                <a>(+5% since last month)</a>
             </div>
             <div class="expenses">
                 <h3>Current Expenses</h3>
                 <p>€2,000</p>
+                <a>(+12% since last month)</a>
             </div>
             <div class="income">
                 <h3>Current Income</h3>
                 <p>€7,000</p>
+                <a>(+8% since last month)</a>
             </div>
             <div class="budget">
                 <h3>Budget goal</h3>
-                <p>56% (352.32€ of 630.00€)</p>
+                <p>56%</p>
+                <a>(352.32€ of 630.00€)</a>
             </div>
             <div class="transactions">
                 <h3>Recent Transactions</h3>
-                <ul>
-                    <li>Pandora DE: -€61.90 (Shopping) 24.08.2025</li>
-                    <li>GKM Interactive: +€500.00 (Salary) 24.08.2025</li>
-                    <li>McDonalds: -€26.30 (Food) 25.08.2025</li>
-                </ul>
+                <div class="transactions-grid">
+                    <!-- Column headers -->
+                    <div class="cell head amount">Amount</div>
+                    <div class="cell head merchant">Merchant</div>
+                    <div class="cell head category">Category</div>
+                    <div class="cell head date">Date</div>
+
+                    <!-- Row 1 -->
+                    <div class="cell amount negative">-€61.90</div>
+                    <div class="cell merchant">Pandora DE</div>
+                    <div class="cell category">Shopping</div>
+                    <div class="cell date">24.08.2025</div>
+
+                    <!-- Row 2 -->
+                    <div class="cell amount positive">+€500.00</div>
+                    <div class="cell merchant">GKM Interactive</div>
+                    <div class="cell category">Salary</div>
+                    <div class="cell date">24.08.2025</div>
+
+                    <!-- Row 3 -->
+                    <div class="cell amount negative">-€26.30</div>
+                    <div class="cell merchant">McDonalds</div>
+                    <div class="cell category">Food</div>
+                    <div class="cell date">25.08.2025</div>
+                </div>
             </div>
         </div>
 
@@ -61,5 +85,221 @@
 </html>
 
 <style>
+body {
+  background-color: #242a64;
+  font-family: 'Montserrat', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+}
 
+.content {
+    max-width: 1500px;
+    margin: 40px auto;
+    padding: 32px;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.time-dropdown {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.17);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    position: absolute;
+    top: 32px;
+    right: 32px;
+}
+
+#timeframe {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.10);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-family: 'Montserrat', sans-serif;
+    margin-left: 5px;
+    align-items: center;
+}
+
+.data {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.balance,
+.expenses, .income, .budget {
+    flex: 1 1 220px;
+    max-width: 250px;
+    min-width: 220px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    padding: 18px;
+    margin-top: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.balance h3,
+.expenses h3, .income h3, .budget h3 {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    margin-top: 0px;
+}
+
+.balance p,
+.expenses p, .income p, .budget p {
+    font-size: 1.8em;
+    margin: 0;
+}
+
+.balance a,
+.expenses a, .income a, .budget a {
+    font-size: 0.9em;
+    color: #ebebeb;
+    margin-top: 4px;
+}
+
+.transactions {
+    flex-basis: 100%;
+    max-width: 100%;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    padding: 18px 18px 26px;
+    box-sizing: border-box;
+}
+
+.transactions h3 {
+    margin: 5px 5px 14px;
+}
+
+.transactions-grid {
+    display: grid;
+    grid-template-columns: 110px 1fr 150px 120px;
+    gap: 10px 28px;
+    font-variant-numeric: tabular-nums;
+    align-content: stretch;
+    justify-items: center;
+}
+
+.transactions-grid .cell {
+    justify-self: stretch;
+    text-align: left;
+}
+
+.transactions-grid .cell {
+    white-space: nowrap;
+    overflow: hidden;
+    /* text-overflow: ellipsis; */
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+}
+
+.transactions-grid .head {
+    font-size: 0.70rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.85;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.28);
+}
+
+.transactions-grid .amount {
+    font-weight: 700;
+    text-align: left; /* left anchor */
+}
+
+.transactions-grid .amount.positive {
+    color: #05c39d;
+}
+
+.transactions-grid .amount.negative {
+    color: #ff4d4d;
+}
+
+.transactions-grid .merchant {
+    font-weight: 600;
+}
+
+.transactions-grid .category {
+    color: #eaeaea;
+    opacity: 0.95;
+}
+
+.transactions-grid .date {
+    color: #e6e6e6;
+    opacity: 0.9;
+}
+
+/* Optional subtle row separators (skip header) */
+.transactions-grid .amount:not(.head) {
+    position: relative;
+}
+.transactions-grid .amount:not(.head)::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    right: -9999px;
+    top: -5px;
+    bottom: -5px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+}
+
+/* Hover highlight (full row) */
+.transactions-grid .amount:not(.head):hover::before {
+    background: rgba(255,255,255,0.09);
+}
+
+/* Make entire logical row react on hover by pairing siblings */
+.transactions-grid .amount:not(.head):hover ~ .merchant:nth-of-type(n),
+.transactions-grid .amount:not(.head):hover ~ .category:nth-of-type(n),
+.transactions-grid .amount:not(.head):hover ~ .date:nth-of-type(n) {
+    /* (No extra style needed; backdrop already applied via ::before) */
+}
+
+/* Responsive: stack columns */
+@media (max-width: 700px) {
+    .transactions-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 16px;
+    }
+
+    .transactions-grid .head {
+        grid-column: span 2;
+    }
+
+    /* Make each data row span 2 columns in pairs:
+       Amount + Merchant on first line, Category + Date on second */
+    .transactions-grid .amount:not(.head),
+    .transactions-grid .merchant,
+    .transactions-grid .category,
+    .transactions-grid .date {
+        white-space: normal;
+    }
+}
 </style>
