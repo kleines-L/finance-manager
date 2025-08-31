@@ -21,27 +21,40 @@ class parser {
     "25.08.2025";"25.08.2025";"Kartenverf�gung";" Buchungstext: SP WOMIER KEYBOARD, WOMIERKEYBOAR US Karte Nr. 4871 78XX XXXX 6800 Kartenzahlung comdirect Visa-Debitkarte 2025-08-22 00:00:00 Ref. 4H2C21MX1DMH669U/67801";"-93,56";
     */
     get_expenses(line) {
-        if (line.includes(`"Lastschrift / Belastung"`) || line.includes(`"Kartenverf�gung"`)) {
-            let parts = line.split(';');
-            let money = parts[4];
-            money = money.replace(/"/g, '').trim();
+        if (line.includes(`"Lastschrift / Belastung"`) || line.includes(`"Kartenverf`)) {
+            const parts = line.split(';');
+            if (parts.length < 5) return;
+            let money = parts[4].replace(/"/g,'').trim();
+            let date = parts[0].replace(/"/g,'').trim();
 
-            let merchant = parts[3];
-            merchant = merchant.replace(/"/g, '').trim();
-            if (merchant.includes('Buchungstext: ')) {
-                merchant = merchant.split('Buchungstext: ')[1].trim();
-                merchant = merchant.split(' Karte Nr.')[0].trim();
+            let raw = parts[3].replace(/"/g,'').trim();
+            let auftraggeber = '';
+            let buchung = '';
+            const agMatch = raw.match(/Auftraggeber:\s*(.+?)\s+Buchungstext:/);
+            if (agMatch) {
+                auftraggeber = agMatch[1].trim();
+                buchung = raw.split('Buchungstext:')[1] || '';
+            } else if (raw.includes('Buchungstext:')) {
+                buchung = raw.split('Buchungstext:')[1];
+            } else {
+                buchung = raw;
+            }
+            buchung = buchung.trim();
+
+            // Cut before card info or reference markers
+            buchung = buchung.split(' Karte Nr.')[0].trim();
+            buchung = buchung.split(' Ref.')[0].trim();
+
+            // Extract timestamp (keep same format)
+            let timestamp = '///';
+            const tsMatch = buchung.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+            if (tsMatch) {
+                timestamp = tsMatch[0];
+                buchung = buchung.replace(tsMatch[0],'').trim();
             }
 
-            let date = parts[0];
-            date = date.replace(/"/g, '').trim();
-
-            let timestamp = "///";
-            const timestampMatch = merchant.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-            if (timestampMatch) {
-                timestamp = timestampMatch[0];
-                merchant = merchant.split(timestampMatch[0])[0].trim();
-            }
+            // If auftraggeber present, combine; avoid duplication
+            let merchant = auftraggeber ? (buchung ? `${auftraggeber} ${buchung}` : auftraggeber) : buchung;
 
             console.log(`\x1b[31mExpense:\x1b[0m Money: \x1b[33m${money}\x1b[0m, Date: \x1b[35m${date}\x1b[0m, Merchant: \x1b[36m${merchant}\x1b[0m`);
             return [merchant, money, date, timestamp];

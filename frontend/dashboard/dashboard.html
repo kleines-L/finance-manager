@@ -543,14 +543,87 @@ function parseCSV(text) {
     return out;
 }
 
+function parseDateGerman(d) {
+    if (!d) return null;
+    const m = d.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (!m) return null;
+    return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+}
+
+function filterTransactionsByTimeframe(list, tf) {
+    if (tf === 'custom') return list;
+    const now = new Date();
+    let days = 30;
+    if (tf === 'last90days') days = 90;
+    else if (tf === 'last180days') days = 180;
+    else if (tf === 'lastYear') days = 365;
+    const cutoff = new Date(now.getTime() - days * 86400000);
+    return list.filter(t => {
+        const dt = parseDateGerman(t.date);
+        if (!dt) return false;
+        return dt >= cutoff;
+    });
+}
+
+function renderTransactions(list) {
+    const grid = document.querySelector('.transactions-grid');
+    if (!grid) return;
+    const headerNodes = Array.from(grid.children).slice(0, 4); // keep first 4 (headers)
+    grid.innerHTML = '';
+    headerNodes.forEach(n => grid.appendChild(n));
+    list.sort((a, b) => {
+        const da = parseDateGerman(a.date) || 0;
+        const db = parseDateGerman(b.date) || 0;
+        return db - da;
+    });
+    list.forEach(t => {
+        const amount = Number(t.amount || 0);
+        const amountEl = document.createElement('div');
+        amountEl.className = 'cell amount ' + (amount >= 0 ? 'positive' : 'negative');
+        amountEl.textContent = (amount >= 0 ? '+' : '') + amount.toFixed(2) + '€';
+        const merchantEl = document.createElement('div');
+        merchantEl.className = 'cell merchant';
+        merchantEl.textContent = t.merchant || '(Unknown)';
+        const categoryEl = document.createElement('div');
+        categoryEl.className = 'cell category';
+        categoryEl.textContent = t.type || '';
+        const dateEl = document.createElement('div');
+        dateEl.className = 'cell date';
+        dateEl.textContent = t.date || '';
+        grid.appendChild(amountEl);
+        grid.appendChild(merchantEl);
+        grid.appendChild(categoryEl);
+        grid.appendChild(dateEl);
+    });
+}
+
+function refreshTransactionsView() {
+    const select = document.getElementById('timeframe');
+    const tf = select ? select.value : 'last30days';
+    loadAllTransactions().then(all => {
+        const filtered = filterTransactionsByTimeframe(all, tf);
+        renderTransactions(filtered);
+    });
+}
+
+function startup() {
+    getDB().then(() => {
+        attachFileHandlers();
+        const sel = document.getElementById('timeframe');
+        if (sel) sel.addEventListener('change', refreshTransactionsView);
+        refreshTransactionsView();
+    });
+}
+
 function handleDroppedFile(file) {
     if (!file || !file.name.endsWith('.csv')) return;
     const reader = new FileReader();
     reader.onload = e => {
         const text = e.target.result;
         const parsed = parseCSV(text);
-        bulkAddTransactions(parsed).then(count => {
-            console.log('Imported transactions:', count);
+        bulkAddTransactions(parsed).then(res => {
+            console.log('Imported transactions:', res);
+            refreshTransactionsView();
         }).catch(err => console.error(err));
     };
     reader.readAsText(file, 'utf-8');
@@ -572,7 +645,12 @@ function attachFileHandlers() {
 }
 
 function startup() {
-    getDB().then(() => attachFileHandlers());
+    getDB().then(() => {
+        attachFileHandlers();
+        const sel = document.getElementById('timeframe');
+        if (sel) sel.addEventListener('change', refreshTransactionsView);
+        refreshTransactionsView();
+    });
 }
 
 document.addEventListener('DOMContentLoaded', startup);
