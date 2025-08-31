@@ -15,6 +15,9 @@
         <img src="./img/user-icon.png" alt="User Icon" class="user-icon">
     </div>
 
+    <!-- File Input als Fallback -->
+    <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+
     <div class="content">
         <h2>Welcome to the Dashboard</h2>
         <div class="time-dropdown">
@@ -26,6 +29,13 @@
                 <option value="lastYear">Last year</option>
                 <option value="custom">All time</option>
             </select>
+        </div>
+
+        <div id="dragOverlay" class="drag-drop-overlay">
+            <div class="drag-box">
+                <h2>Drop CSV here</h2>
+                <p>(Nothing will happen yet)</p>
+            </div>
         </div>
 
         <div class="data">
@@ -302,4 +312,269 @@ body {
         white-space: normal;
     }
 }
+
+
+
+.drag-drop-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,37,64,0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    transition: opacity .18s ease;
+    color: #fff;
+}
+.drag-drop-overlay .drag-box {
+    padding: 48px 72px;
+    border: 2px dashed rgba(255,255,255,0.35);
+    border-radius: 28px;
+    background: rgba(255,255,255,0.08);
+    text-align: center;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.55);
+}
+.drag-drop-overlay .drag-box h2 {
+    margin: 0 0 8px;
+    font-weight: 600;
+    letter-spacing: .5px;
+}
+.drag-drop-overlay .drag-box p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: .9rem;
+}
+.drag-drop-overlay.active {
+    display: flex;
+}
 </style>
+
+<script>
+// Drag & Drop functionality
+(function setupDragOverlay(){
+    const overlay = document.getElementById('dragOverlay');
+    let dragCounter = 0;
+
+    function show() {
+        overlay.classList.add('active');
+    }
+    function hide() {
+        overlay.classList.remove('active');
+    }
+
+    window.addEventListener('dragenter', (e) => {
+        dragCounter++;
+        if (e.dataTransfer && e.dataTransfer.types.includes('Files')) show();
+    });
+
+    window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    window.addEventListener('dragleave', () => {
+        dragCounter--;
+        if (dragCounter <= 0) {
+            dragCounter = 0;
+            hide();
+        }
+    });
+
+    window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        hide();
+    });
+})();
+
+
+// init a indexedDB here now
+function initDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open('financeManager', 1);
+        req.onupgradeneeded = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('transactions')) {
+                const store = db.createObjectStore('transactions', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('date', 'date');
+                store.createIndex('type', 'type');
+                store.createIndex('merchant', 'merchant');
+            }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = e => reject(e.target.error);
+    });
+}
+
+function getDB() {
+    if (!window._fmDBPromise) window._fmDBPromise = initDB();
+    return window._fmDBPromise;
+}
+
+function addTransaction(txObj) {
+    return getDB().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction('transactions', 'readwrite');
+        tx.objectStore('transactions').add(txObj);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = e => reject(e.target.error);
+    }));
+}
+
+function loadAllTransactions() {
+    return getDB().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction('transactions', 'readonly');
+        const store = tx.objectStore('transactions');
+        const all = [];
+        store.openCursor().onsuccess = e => {
+            const cur = e.target.result;
+            if (cur) { all.push(cur.value); cur.continue(); } else resolve(all);
+        };
+        tx.onerror = e => reject(e.target.error);
+    }));
+}
+
+function buildFingerprint(rec) {
+    const date = rec.date || '';
+    const merchant = (rec.merchant || '').toLowerCase().replace(/\s+/g,' ').trim();
+    const amountNum = typeof rec.amount === 'number' ? rec.amount : parseFloat(rec.amount || 0);
+    const amount = isNaN(amountNum) ? '0.00' : amountNum.toFixed(2);
+    return [date, merchant, amount].join('||');
+}
+
+function bulkAddTransactions(list) {
+    return Promise.all([getDB(), loadAllTransactions()]).then(([db, existing]) => new Promise((resolve, reject) => {
+        const existingSet = new Set(existing.map(buildFingerprint));
+        const toAdd = [];
+        list.forEach(r => {
+            const fp = buildFingerprint(r);
+            if (!existingSet.has(fp)) {
+                existingSet.add(fp);
+                toAdd.push(r);
+            }
+        });
+        if (!toAdd.length) return resolve({ added: 0, skipped: list.length });
+        const tx = db.transaction('transactions', 'readwrite');
+        const store = tx.objectStore('transactions');
+        toAdd.forEach(o => store.add(o));
+        tx.oncomplete = () => resolve({ added: toAdd.length, skipped: list.length - toAdd.length });
+        tx.onerror = e => reject(e.target.error);
+    }));
+}
+
+function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+    const out = [];
+    const tsRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+    function cleanAmount(a) {
+        let s = a.replace(/"/g,'').trim();
+        s = s.replace(/\./g,'').replace(',','.');
+        return parseFloat(s);
+    }
+    lines.forEach(line => {
+        if (line.startsWith('"offen";"--";')) {
+            const parts = line.split(';');
+            if (parts.length < 5) return;
+            let amount = cleanAmount(parts[4]);
+            let merchantRaw = parts[3].replace(/"/g,'').trim();
+            merchantRaw = merchantRaw.split('Buchungstext: ')[1] || merchantRaw;
+            const tsMatch = merchantRaw.match(tsRegex);
+            let ts = null;
+            if (tsMatch) {
+                ts = tsMatch[0];
+                merchantRaw = merchantRaw.replace(ts,'').trim();
+            }
+            out.push({
+                type: 'open_withdrawal',
+                date: null,
+                merchant: merchantRaw,
+                amount: amount,
+                timestamp: ts
+            });
+            return;
+        }
+        if (line.includes('"Lastschrift / Belastung"') || line.includes('"Kartenverf')) {
+            const parts = line.split(';');
+            if (parts.length < 5) return;
+            let date = parts[0].replace(/"/g,'').trim();
+            let amount = cleanAmount(parts[4]);
+            let merchant = parts[3].replace(/"/g,'').trim();
+            if (merchant.includes('Buchungstext: ')) {
+                merchant = merchant.split('Buchungstext: ')[1].trim();
+                merchant = merchant.split(' Karte Nr.')[0].trim();
+            }
+            const tsMatch = merchant.match(tsRegex);
+            let ts = null;
+            if (tsMatch) {
+                ts = tsMatch[0];
+                merchant = merchant.split(ts)[0].trim();
+            }
+            out.push({
+                type: 'expense',
+                date: date,
+                merchant: merchant,
+                amount: amount,
+                timestamp: ts
+            });
+            return;
+        }
+        if (line.includes('"Übertrag / Überweisung"') || line.includes('"�bertrag / �berweisung"')) {
+            const parts = line.split(';');
+            if (parts.length < 5) return;
+            let date = parts[0].replace(/"/g,'').trim();
+            let amountRaw = parts[4];
+            if (amountRaw.startsWith('"-')) return;
+            let amount = cleanAmount(amountRaw);
+            let source = parts[3].replace(/"/g,'').trim();
+            if (source.includes('Auftraggeber: ')) {
+                source = source.split('Auftraggeber: ')[1].trim();
+                source = source.split(' Buchungstext:')[0].trim();
+            }
+            out.push({
+                type: 'income',
+                date: date,
+                merchant: source,
+                amount: amount,
+                timestamp: null
+            });
+            return;
+        }
+    });
+    return out;
+}
+
+function handleDroppedFile(file) {
+    if (!file || !file.name.endsWith('.csv')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const text = e.target.result;
+        const parsed = parseCSV(text);
+        bulkAddTransactions(parsed).then(count => {
+            console.log('Imported transactions:', count);
+        }).catch(err => console.error(err));
+    };
+    reader.readAsText(file, 'utf-8');
+}
+
+function attachFileHandlers() {
+    const hiddenInput = document.getElementById('csvFileInput');
+    if (hiddenInput) {
+        hiddenInput.addEventListener('change', e => {
+            const f = e.target.files[0];
+            handleDroppedFile(f);
+        });
+    }
+    window.addEventListener('drop', e => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            handleDroppedFile(e.dataTransfer.files[0]);
+        }
+    });
+}
+
+function startup() {
+    getDB().then(() => attachFileHandlers());
+}
+
+document.addEventListener('DOMContentLoaded', startup);
+
+</script>
